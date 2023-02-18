@@ -1,4 +1,6 @@
 *.o
+*.rej
+*.orig
 dmenu_run
 dmenu_path
 dmenu 
