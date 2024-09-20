@@ -24,6 +24,9 @@ static unsigned int lines      = 0;
 /* Size of the window border */
 static unsigned int border_width = 1;
 
+static char *wmclass="dmenu";
+static char *wmname="dmenu";
+
 /*
  * Characters not considered part of a word while deleting words
  * for example: " /?\"&[]"

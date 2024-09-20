@@ -666,7 +666,7 @@ setup(void)
 	XIM xim;
 	Window w, dw, *dws;
 	XWindowAttributes wa;
-	XClassHint ch = {"dmenu", "dmenu"};
+	XClassHint ch = {wmname,wmclass};
 #ifdef XINERAMA
 	XineramaScreenInfo *info;
 	Window pw;
@@ -826,6 +826,10 @@ main(int argc, char *argv[])
 			embed = argv[++i];
 		else if (!strcmp(argv[i], "-bw"))
 			border_width = atoi(argv[++i]); /* border width */
+        else if (!strcmp(argv[i], "--class")) /* window manager class */
+            wmclass = argv[++i]; /* set wmclass */
+        else if (!strcmp(argv[i], "--name"))  /* window manager name */
+            wmname = argv[++i]; /* set wmname */
 		else
 			usage();
 
