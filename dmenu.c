@@ -662,6 +662,80 @@ draw:
 }
 
 static void
+buttonpress(XEvent *e)
+{
+	XButtonPressedEvent *ev = &e->xbutton;
+	
+	if (ev->window != win)
+		return;
+		
+	struct item *clicked_item = NULL;
+	struct item *item;
+	int x = 0, y = 0, w;
+	
+	/* Right-click: exit without selection */
+	if (ev->button == Button3)
+		exit(1);
+
+	/* Scroll up: move selection up/left */
+	if (ev->button == Button4 && prev) {
+		sel = curr = prev;
+		calcoffsets();
+		drawmenu();
+		return;
+	}
+
+	/* Scroll down: move selection down/right */
+	if (ev->button == Button5 && next) {
+		sel = curr = next;
+		calcoffsets();
+		drawmenu();
+		return;
+	}
+
+	/* Only handle left-click from here on */
+	if (ev->button != Button1)
+		return;
+
+	if (lines > 0) {
+		/* Vertical mode */
+		y = bh;
+		x = promptw;
+		w = mw - x;
+		
+		for (item = curr; item != next; item = item->right) {
+			if (ev->x >= x && ev->x <= x + w && 
+			    ev->y >= y && ev->y <= y + bh) {
+				clicked_item = item;
+				break;
+			}
+			y += bh;
+		}
+	} else if (matches) {
+		/* Horizontal mode */
+		x = inputw;
+		w = TEXTW("<");
+		x += w; /* skip left arrow */
+		
+		/* Check item clicks */
+		for (item = curr; item != next; item = item->right) {
+			w = textw_clamp(item->text, mw - x - TEXTW(">"));
+			if (ev->x >= x && ev->x <= x + w) {
+				clicked_item = item;
+				break;
+			}
+			x += w;
+		}
+	}
+	
+	/* If we clicked on an item, select it and exit */
+	if (clicked_item) {
+		puts(clicked_item->text);
+		exit(0);
+	}
+}
+
+static void
 paste(void)
 {
 	char *p, *q;
@@ -720,6 +794,9 @@ run(void)
 				break;
 			cleanup();
 			exit(1);
+		case ButtonPress:
+			buttonpress(&ev);
+			break;
 		case Expose:
 			if (ev.xexpose.count == 0)
 				drw_map(drw, win, 0, 0, mw, mh);
@@ -832,7 +909,8 @@ setup(void)
 	/* create menu window */
 	swa.override_redirect = True;
 	swa.background_pixel = scheme[SchemeNorm][ColBg].pixel;
-	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
+    swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask |
+        ButtonPressMask;
 	win = XCreateWindow(dpy, root, x, y, mw, mh, border_width,
 	                    CopyFromParent, CopyFromParent, CopyFromParent,
 	                    CWOverrideRedirect | CWBackPixel | CWEventMask, &swa);
